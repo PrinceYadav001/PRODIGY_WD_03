@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        * {
+            color: white;
+            font-family: sans-serif;
+            transition: 0.2s ease-in-out;
+            user-select: none;
+        }
+
+        body {
+            background-color: #252A34;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            text-align: center;
+            padding-top: 60px; /* Space for the navbar */
+        }
+
+        .navbar {
+            background-color: #333;
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .navbar h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .navbar .music-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar .music-controls button {
+            font-size: 1rem;
+            padding: 5px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #FF2E63;
+            color: #fff;
+            margin-left: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar .music-controls button:hover {
+            background-color: #08D9D6;
+        }
+
+        .turn-container {
+            width: 170px;
+            height: 80px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            position: relative;
+        }
+
+        .turn-container h3 {
+            margin: 0;
+            grid-column-start: 1;
+            grid-column-end: 3;
+        }
+
+        .turn-container .turn-box {
+            border: 3px solid #000;
+            font-size: 1.6rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .turn-container .turn-box:nth-child(even) {
+            border-right: none;
+        }
+
+        .bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 85px;
+            height: 40px;
+            background-color: #FF2E63;
+            z-index: -1;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            height: 250px;
+            width: 250px;
+            margin: 30px auto;
+            border: 2px solid #000;
+        }
+
+        .box {
+            cursor: pointer;
+            font-size: 2rem;
+            font-weight: 700;
+            border: 2px solid #000;
+            background-color: #333;
+            color: #FF2E63;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .box:hover {
+            background-color: #FF2E63;
+            color: #333;
+        }
+
+        #play-again {
+            background-color: #FF2E63;
+            padding: 10px 25px;
+            border: none;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            transition: background-color 0.3s ease;
+        }
+
+        #play-again:hover {
+            padding: 10px 40px;
+            background-color: #08D9D6;
+            color: #000;
+        }
+
+        .gameover-img {
+            display: none;
+            margin: 20px auto;
+            width: 150px;
+        }
+
+        .player-names {
+            margin: 20px;
+        }
+
+        .player-names input {
+            font-size: 1rem;
+            padding: 5px;
+            margin: 0 10px;
+            border: 2px solid #000;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Welcome to Tic Tac Toe</h1>
+        <div class="music-controls">
+            <button id="music-toggle">Music: On</button>
+        </div>
+    </div>
+
+    <div class="player-names">
+        X=<input type="text" id="player1" placeholder="Player 1 Name" />
+        O=<input type="text" id="player2" placeholder="Player 2 Name" />
+    </div>
+
+    <div class="turn-container">
+        <h3>Turn For</h3>
+        <div class="turn-box">X</div>
+        <div class="turn-box">O</div>
+        <div class="bg"></div>
+    </div>
+
+    <div class="main-grid">
+        <div class="box" data-index="0"></div>
+        <div class="box" data-index="1"></div>
+        <div class="box" data-index="2"></div>
+        <div class="box" data-index="3"></div>
+        <div class="box" data-index="4"></div>
+        <div class="box" data-index="5"></div>
+        <div class="box" data-index="6"></div>
+        <div class="box" data-index="7"></div>
+        <div class="box" data-index="8"></div>
+    </div>
+
+    <h2 id="results"></h2>
+    <button id="play-again">Play Again</button>
+    <img src="excited.gif" class="gameover-img" id="gameover-img" alt="Game Over">
+    
+    <audio id="bg-music" src="music.mp3" loop></audio>
+    <audio id="turn-sound" src="ting.mp3"></audio>
+    <audio id="win-sound" src="gameover.mp3"></audio>
+
+    <script>
+        let boxes = document.querySelectorAll(".box");
+        let turnBoxX = document.querySelector(".turn-box:nth-child(1)");
+        let turnBoxO = document.querySelector(".turn-box:nth-child(2)");
+        let turn = "X";
+        let isGameOver = false;
+        let musicOn = true;
+
+        let bgMusic = document.getElementById("bg-music");
+        bgMusic.play();
+
+        function playTurnSound() {
+            document.getElementById("turn-sound").play();
+        }
+
+        function playWinSound() {
+            document.getElementById("win-sound").play();
+        }
+
+        function toggleMusic() {
+            musicOn = !musicOn;
+            if (musicOn) {
+                bgMusic.play();
+                document.getElementById("music-toggle").textContent = "Music: On";
+            } else {
+                bgMusic.pause();
+                document.getElementById("music-toggle").textContent = "Music: Off";
+            }
+        }
+
+        function updateTurnBox() {
+            turnBoxX.textContent = getCurrentPlayerName("X");
+            turnBoxO.textContent = getCurrentPlayerName("O");
+        }
+
+        function getCurrentPlayerName(player) {
+            return player === "X" ? document.getElementById("player1").value || "Player 1" : document.getElementById("player2").value || "Player 2";
+        }
+
+        function changeTurn() {
+            turn = turn === "X" ? "O" : "X";
+            document.querySelector(".bg").style.left = turn === "X" ? "0" : "85px";
+            updateTurnBox();
+        }
+
+        function checkWin() {
+            let winConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+
+            for (let condition of winConditions) {
+                const [a, b, c] = condition;
+                if (boxes[a].innerHTML && boxes[a].innerHTML === boxes[b].innerHTML && boxes[a].innerHTML === boxes[c].innerHTML) {
+                    isGameOver = true;
+                    const winnerName = getCurrentPlayerName(turn);
+                    document.querySelector("#results").textContent = `${winnerName} wins!`;
+                    document.querySelector("#play-again").style.display = "inline";
+                    playWinSound();
+                    document.getElementById("gameover-img").style.display = "block";
+                    condition.forEach(index => {
+                        boxes[index].style.backgroundColor = "#08D9D6";
+                        boxes[index].style.color = "#000";
+                    });
+                    return;
+                }
+            }
+        }
+
+        function checkDraw() {
+            if (!isGameOver && Array.from(boxes).every(box => box.innerHTML)) {
+                isGameOver = true;
+                document.querySelector("#results").textContent = "Draw!";
+                document.querySelector("#play-again").style.display = "inline";
+            }
+        }
+
+        function handleBoxClick(event) {
+            const box = event.target;
+            if (!isGameOver && box.innerHTML === "") {
+                box.innerHTML = turn;
+                playTurnSound();
+                checkWin();
+                checkDraw();
+                changeTurn();
+            }
+        }
+
+        function resetGame() {
+            isGameOver = false;
+            turn = "X";
+            document.querySelector(".bg").style.left = "0";
+            document.querySelector("#results").textContent = "";
+            document.querySelector("#play-again").style.display = "none";
+            document.getElementById("gameover-img").style.display = "none";
+
+            boxes.forEach(box => {
+                box.innerHTML = "";
+                box.style.removeProperty("background-color");
+                box.style.color = "#FF2E63";
+            });
+
+            updateTurnBox();
+        }
+
+        document.querySelector("#play-again").addEventListener("click", resetGame);
+        document.getElementById("music-toggle").addEventListener("click", toggleMusic);
+
+        boxes.forEach(box => box.addEventListener("click", handleBoxClick));
+        updateTurnBox();
+    </script>
+</body>
+</html>
